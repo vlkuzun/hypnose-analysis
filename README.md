@@ -26,7 +26,7 @@ Within your working directory use a terminal to clone the repo to your local fol
 > figure styles and the shared layout/selector parsing:
 >
 > ```
-> git clone github.com/SainsburyWellcomeCentre/hypnose-helpers
+> git clone https://github.com/SainsburyWellcomeCentre/hypnose-helpers.git
 > pip install -e /path/to/hypnose-helpers
 > ```
 >
@@ -41,18 +41,18 @@ Within your working directory use a terminal to clone the repo to your local fol
 
 ```python -m ipykernel install --user --name=hypnose-behavior --display-name="Hypnose Analysis"```
 
-5. Select data location
+5. Select data location (from within the hypnose-behavior main folder)
 
 ```bash
-python scripts/set_data_location.py --list          # show profiles
-python scripts/set_data_location.py server-mac      # activate one (writes the local file)
-python scripts/set_data_location.py --show          # print the resolved roots (+ warns if missing)
+hypnose-set-data-location --show     # what's active now
+hypnose-set-data-location --list     # what's available
+hypnose-set-data-location server-windows   # switch to one
 ```
 - You can add more data locations (descriptions of where the pipeline reads `rawdata` and writes `derivatives`) in the configs/data_locations.yml file (shared). 
 
 6. (Optional) Symlink: 
 
-Replaces by 5., but kept as an option (e.g., to see rawdata tree in repo). 
+Replaced by 5., but kept as an option (e.g., to see rawdata tree in repo). 
 
 1. Windows (requires Ceph server mounted at Z:):
 
