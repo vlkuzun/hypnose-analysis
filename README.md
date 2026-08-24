@@ -10,38 +10,24 @@ This repository is utilised for processing and visualising data acquired from Hy
 
 ## How to Use
 
-1. Clone the repository
+1. Clone the repository and the hypnose-helpers repo side by side
 
 Within your working directory use a terminal to clone the repo to your local folder:
 
-```git clone github.com/SainsburyWellcomeCentre/hypnose-behavior```
+```git clone https://github.com/SainsburyWellcomeCentre/hypnose-behavior```
+```git clone https://github.com/SainsburyWellcomeCentre/hypnose-helpers.git```
 
-2. Create and activate the conda environment using the environment.yml file
+
+2. Create the conda environment using the environment.yml file
 
 ```conda env create -f environment.yml```
 ```conda activate hypnose-behavior```
 
-> **`hypnose-helpers` is a required dependency** and is not on PyPI, so install it from a
-> clone before this package. It owns the data-location mechanism (`io/paths.py`), the
-> figure styles and the shared layout/selector parsing:
->
-> ```
-> git clone https://github.com/SainsburyWellcomeCentre/hypnose-helpers.git
-> pip install -e /path/to/hypnose-helpers
-> ```
->
-> Without it, `import hypnose_behavior.io.paths` fails outright — this is a hard
-> dependency, not the optional/lazy kind hypnose-somnotate uses.
-
-3. Install hypnose-behavior as a editable install
-
-- In the repo's main folder, run `pip install -e .`.
-
-4. Add the environment as a kernel to run notebooks
+3. Add the environment as a kernel to run notebooks
 
 ```python -m ipykernel install --user --name=hypnose-behavior --display-name="Hypnose Analysis"```
 
-5. Select data location (from within the hypnose-behavior main folder)
+4. Select data location (from within the hypnose-behavior main folder)
 
 ```bash
 hypnose-set-data-location --show     # what's active now
@@ -50,7 +36,7 @@ hypnose-set-data-location server-windows   # switch to one
 ```
 - You can add more data locations (descriptions of where the pipeline reads `rawdata` and writes `derivatives`) in the configs/data_locations.yml file (shared). 
 
-6. (Optional) Symlink: 
+5. (Optional, not required or currently recommended) Symlink: 
 
 Replaced by 5., but kept as an option (e.g., to see rawdata tree in repo). 
 
