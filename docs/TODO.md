@@ -19,18 +19,19 @@ This outlives any one plan.
 
 ---
 
-## `sleap-hypnose` still resolves the flat layout
+## ~~`sleap-hypnose` still resolves the flat layout~~ — done 2026-08-26
 
-**The one piece of this change that lives in another repo.** `sleap_utils.py` spells
-`session_dir / "saved_analysis_results"` in five places and searches it non-recursively:
-`_find_tracking_files` globs `sleap_tracking_video*.{parquet,csv}` and `_find_combined_file`
-globs `*_combined_sleap_tracking_timestamps.{parquet,csv}`, both directly in the results
-directory, and `results_dir.glob("*.slp")` finds the raw predictions the same way.
+`sleap_utils.py` spelled `session_dir / "saved_analysis_results"` in five places and
+searched it non-recursively, so a migrated session's `movement_analysis/` files were
+invisible to it. That file no longer exists: `sleap-hypnose` is now `hypnose-sleap`, a
+package whose `io/layout.py` resolves both layouts with `rglob` — the same fix this repo
+applied to `io/parquet_peek._parquet_files`.
 
-After a session is migrated, all three of those are in `movement_analysis/` and none of
-those globs sees them. `rglob` reads a flat session and a grouped one alike, which is the
-same fix this repo applied to `io/parquet_peek._parquet_files`. Until it lands, run the
-SLEAP steps for a session **before** migrating it, or migrate that repo first.
+The ordering constraint is lifted: SLEAP steps and migration can run in either order.
+`hypnose-sleap`'s `qc/check_layout.py` asserts the two repos still agree on
+`MOVEMENT_SUBFOLDER`, `RESULTS_DIRNAME` and `SUBJECT_PATTERN`, and calls this repo's
+`find_tracking_file` against a file written at their `write_path`, so the agreement is
+checked rather than assumed.
 
 ---
 
