@@ -23,4 +23,5 @@ dependencies:
     - moviepy
     - swc-aeon==0.1.0
     - harp-python
+    - -e ../hypnose-helpers
     - -e .

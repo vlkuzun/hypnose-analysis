@@ -35,6 +35,22 @@ checked rather than assumed.
 
 ---
 
+## Select hidden-rule sessions automatically
+
+`summary.json` already carries `params.hidden_rule_odors` / `_positions` for every saved
+session, pre-restructure ones included, so this needs no manifest flag and no
+re-analysis — measured, it separated all nine fixture sessions correctly and found 29 of
+sub-040's 48. Promote the `_session_hr_odors` closure in
+`visualization/sampling.py:764` to `io/loaders.py` beside `iter_sessions`: it is a loader
+concern, and five of the callers sit outside `visualization/`, so `prep.py` cannot hold
+it (section 36). That also retires the copies in `visualization/hidden_rule.py` and
+`movement/traces.py`, which each re-read `summary.json` for the same lookup. Then give
+the `hidden_rule.py` plotters a `plot_hr_dates` flag that fills `dates` from it when no
+dates are passed, so a hidden-rule figure stops needing the dates looked up by hand.
+`plot_regression`-gated, since it reaches those 44 cases.
+
+---
+
 ## The single-reward metrics are outside the registry
 
 `metric_analysis/run.py:395-431` hardcodes the whole family, against 70 `@metric` /
