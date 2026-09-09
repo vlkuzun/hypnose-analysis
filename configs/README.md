@@ -28,6 +28,7 @@ A running kernel caches the paths — after switching, **restart the kernel** or
 
 User-facing setup `.yml` (e.g. rig/olfactometer) can also live here.
 
-Note: the harp **device schemas** (`behavior.yml`, `olfactometer.yml`) consumed by the analysis
+Note: the harp **device schemas** (`behavior.yml`, `olfactometer_v15.yml`, `olfactometer_v23.yml`)
+consumed by the analysis
 code remain *package data* under `src/hypnose_behavior/resources/device_schemas/`, loaded via
 `importlib.resources` — they are not duplicated here.

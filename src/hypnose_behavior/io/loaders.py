@@ -39,7 +39,67 @@ from hypnose_behavior.io.readers import (  # noqa: F401
 
 SCHEMA_DIR = files("hypnose_behavior.resources.device_schemas")
 BEHAVIOR_SCHEMA_PATH = SCHEMA_DIR / "behavior.yml"
-OLFACTOMETER_SCHEMA_PATH = SCHEMA_DIR / "olfactometer.yml"
+OLFACTOMETER_SCHEMA_V15 = SCHEMA_DIR / "olfactometer_v15.yml"
+OLFACTOMETER_SCHEMA_V23 = SCHEMA_DIR / "olfactometer_v23.yml"
+
+# Olfactometer firmware 2.3 inserted ValveState at address 71, shifting the two
+# registers this package reads down by one:
+#
+#                      fw 1.5   fw 2.3
+#   OdorValveState         71       72
+#   EndValveState          72       73
+#
+# `load` globs chunks by register *address*, so a reader built from the wrong schema
+# does not raise -- it reads a file that is not there (empty frame) and reads the odor
+# valves as end valves (every mask bit False). Both failures are silent, which is why
+# the schema is chosen per session rather than fixed at import.
+#
+# Address 72 is written under both firmwares and so identifies neither. 73 and 71 each
+# exist under exactly one, and are the only registers used to tell them apart.
+_ODOR_VALVE_STATE_V15 = 71
+_END_VALVE_STATE_V23 = 73
+_OLFACTOMETER_DEVICES = ("Olfactometer0", "Olfactometer1")
+
+
+def _has_register(root: Path, device: str, address: int) -> bool:
+    """Whether ``device`` under ``root`` logged any chunk for ``address``.
+
+    Globs exactly as ``readers.load`` does, so "the picker saw it" and "the loader can
+    read it" cannot disagree.
+    """
+    device_dir = Path(root) / device
+    return bool(glob(f"{device_dir.joinpath(device)}_{address}_*.bin"))
+
+
+def olfactometer_schema_for(root, *, verbose: bool = True):
+    """The olfactometer schema matching the firmware that recorded ``root``.
+
+    Picks by which register addresses the session actually logged: 73 (EndValveState
+    under 2.3) means the 2.3 map, 71 (OdorValveState under 1.5) the 1.5 map. Warns and
+    falls back to 1.5 when a session logged neither, since that leaves address 72 --
+    the one address both firmwares write -- ambiguous.
+    """
+    for device in _OLFACTOMETER_DEVICES:
+        if _has_register(root, device, _END_VALVE_STATE_V23):
+            vprint(verbose, f"Olfactometer firmware 2.3 detected ({device} register "
+                            f"{_END_VALVE_STATE_V23}); using olfactometer_v23.yml")
+            return OLFACTOMETER_SCHEMA_V23
+        if _has_register(root, device, _ODOR_VALVE_STATE_V15):
+            vprint(verbose, f"Olfactometer firmware 1.5 detected ({device} register "
+                            f"{_ODOR_VALVE_STATE_V15}); using olfactometer_v15.yml")
+            return OLFACTOMETER_SCHEMA_V15
+
+    found = sorted({
+        int(m.group(1))
+        for device in _OLFACTOMETER_DEVICES
+        for f in glob(f"{(Path(root) / device).joinpath(device)}_*.bin")
+        if (m := re.search(rf"{device}_(\d+)_", os.path.basename(f)))
+    })
+    print(f"WARNING: could not identify the olfactometer firmware for {root}: neither "
+          f"register {_END_VALVE_STATE_V23} (fw 2.3) nor {_ODOR_VALVE_STATE_V15} "
+          f"(fw 1.5) was logged (registers present: {found or 'none'}). Falling back to "
+          f"olfactometer_v15.yml -- odor valve data may be wrong or missing.")
+    return OLFACTOMETER_SCHEMA_V15
 
 
 def load_experiment(subjid, date, index=None):
@@ -159,8 +219,9 @@ def load_all_streams(root, apply_corrections = True, *args, verbose: bool = True
     
     # Create readers
     behavior_reader = harp.create_reader(str(BEHAVIOR_SCHEMA_PATH), epoch=harp.REFERENCE_EPOCH)
-    olfactometer_reader = harp.create_reader(str(OLFACTOMETER_SCHEMA_PATH), epoch=harp.REFERENCE_EPOCH)
-    
+    olfactometer_reader = harp.create_reader(
+        str(olfactometer_schema_for(root, verbose=verbose)), epoch=harp.REFERENCE_EPOCH)
+
     data = {}
     
     # === TIMESTAMP SYNCHRONIZATION ===
@@ -537,7 +598,8 @@ def load_odor_mapping(root, *, data=None, verbose: bool = True, **kwargs):
     else:
         # Load valve data if not provided
         try:
-            olfactometer_reader = harp.create_reader(str(OLFACTOMETER_SCHEMA_PATH), epoch=harp.REFERENCE_EPOCH)
+            olfactometer_reader = harp.create_reader(
+                str(olfactometer_schema_for(root, verbose=verbose)), epoch=harp.REFERENCE_EPOCH)
             olfactometer_valves_0 = load(olfactometer_reader.OdorValveState, root/"Olfactometer0")
             olfactometer_valves_1 = load(olfactometer_reader.OdorValveState, root/"Olfactometer1")
         except Exception as e:

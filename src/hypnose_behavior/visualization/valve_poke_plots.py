@@ -21,7 +21,7 @@ from IPython import get_ipython
 from hypnose_behavior.io.loaders import (
     compute_real_time_offset,
     load, load_all_streams, load_experiment_events, load_odor_mapping, concat_digi_events,
-    BEHAVIOR_SCHEMA_PATH, OLFACTOMETER_SCHEMA_PATH,
+    BEHAVIOR_SCHEMA_PATH, olfactometer_schema_for,
 )
 
 def plot_valve_and_poke_events(
@@ -122,7 +122,8 @@ def plot_valve_and_poke_events(
 
     # --- Readers and minimal loader (only needed registers) ---
     behavior_reader = harp.create_reader(str(BEHAVIOR_SCHEMA_PATH), epoch=harp.REFERENCE_EPOCH)
-    olf_reader = harp.create_reader(str(OLFACTOMETER_SCHEMA_PATH), epoch=harp.REFERENCE_EPOCH)
+    olf_reader = harp.create_reader(
+        str(olfactometer_schema_for(root)), epoch=harp.REFERENCE_EPOCH)
 
     registers = dict(
         odor_valve_state_0=("olfactometer_valves_0", olf_reader.OdorValveState, "Olfactometer0"),

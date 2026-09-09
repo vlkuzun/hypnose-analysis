@@ -93,7 +93,9 @@ src/hypnose_behavior/
                          permutation, autocorrelation, model comparison
     utils/               small shared helpers
     qc/                  quality control: data validation + golden-master regression tools (see below)
-    resources/device_schemas/  harp schemas (behavior.yml, olfactometer.yml), loaded as package data
+    resources/device_schemas/  harp schemas (behavior.yml, olfactometer_v15.yml,
+                         olfactometer_v23.yml -- picked per session by firmware),
+                         loaded as package data
 ```
 
 The importable package is `hypnose_behavior` (e.g. `from hypnose_behavior.trial_classification.run import batch_analyze_sessions`).
