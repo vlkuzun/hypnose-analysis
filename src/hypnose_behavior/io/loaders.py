@@ -99,13 +99,29 @@ def olfactometer_schema_for(root, *, verbose: bool = True):
     # warnings.warn, not print: the batch callers wrap this in redirect_stdout when
     # verbose=False (trial_classification/run.py::_maybe_silent), so a print here is
     # swallowed exactly in the unattended runs that most need to see it.
-    warnings.warn(
-        f"could not identify the olfactometer firmware for {root}: neither register "
-        f"{_END_VALVE_STATE_V23} (fw 2.3) nor {_ODOR_VALVE_STATE_V15} (fw 1.5) was "
-        f"logged (registers present: {found or 'none'}). Falling back to "
-        f"olfactometer_v15.yml -- odor valve data may be wrong or missing.",
-        RuntimeWarning, stacklevel=2,
-    )
+    #
+    # Two unrelated situations land here and must not read alike. A run that logged no
+    # olfactometer registers at all is an aborted or instantly restarted recording:
+    # there is no odor data, so no schema can be wrong about it. A run that logged some
+    # registers but neither 71 nor 73 genuinely has data whose register map cannot be
+    # established, and the fallback may then misread it -- that is the one to chase.
+    if not found:
+        present = [d for d in _OLFACTOMETER_DEVICES if (Path(root) / d).is_dir()]
+        where = (f"{' and '.join(present)} present but holding no register chunks"
+                 if present else "no Olfactometer0/Olfactometer1 folders at all")
+        warnings.warn(
+            f"no olfactometer data recorded for {root}: {where}. Nothing to read for this run.",
+            RuntimeWarning, stacklevel=2,
+        )
+    else:
+        warnings.warn(
+            f"could not identify the olfactometer firmware for {root}: registers "
+            f"{found} were logged, but neither {_END_VALVE_STATE_V23} (fw 2.3) nor "
+            f"{_ODOR_VALVE_STATE_V15} (fw 1.5), so the register map is ambiguous. "
+            f"Falling back to olfactometer_v15.yml -- this run has odor data that may "
+            f"be read WRONG. Check it by hand.",
+            RuntimeWarning, stacklevel=2,
+        )
     return OLFACTOMETER_SCHEMA_V15
 
 
