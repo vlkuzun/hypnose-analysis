@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import re
 import json
+import warnings
 import zoneinfo
 from dataclasses import dataclass
 from functools import cached_property
@@ -95,10 +96,16 @@ def olfactometer_schema_for(root, *, verbose: bool = True):
         for f in glob(f"{(Path(root) / device).joinpath(device)}_*.bin")
         if (m := re.search(rf"{device}_(\d+)_", os.path.basename(f)))
     })
-    print(f"WARNING: could not identify the olfactometer firmware for {root}: neither "
-          f"register {_END_VALVE_STATE_V23} (fw 2.3) nor {_ODOR_VALVE_STATE_V15} "
-          f"(fw 1.5) was logged (registers present: {found or 'none'}). Falling back to "
-          f"olfactometer_v15.yml -- odor valve data may be wrong or missing.")
+    # warnings.warn, not print: the batch callers wrap this in redirect_stdout when
+    # verbose=False (trial_classification/run.py::_maybe_silent), so a print here is
+    # swallowed exactly in the unattended runs that most need to see it.
+    warnings.warn(
+        f"could not identify the olfactometer firmware for {root}: neither register "
+        f"{_END_VALVE_STATE_V23} (fw 2.3) nor {_ODOR_VALVE_STATE_V15} (fw 1.5) was "
+        f"logged (registers present: {found or 'none'}). Falling back to "
+        f"olfactometer_v15.yml -- odor valve data may be wrong or missing.",
+        RuntimeWarning, stacklevel=2,
+    )
     return OLFACTOMETER_SCHEMA_V15
 
 
